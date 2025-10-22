@@ -2,17 +2,25 @@ package com.example.shoppinglist.presentation
 
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.shoppinglist.R
 import com.example.shoppinglist.domain.ShopItem
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var mainViewModel: MainViewModel
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var shopListAdapter: ShopListAdapter
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,12 +31,23 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+        shopListAdapter = ShopListAdapter()
+
+        recyclerView = findViewById(R.id.recyclerView)
+        recyclerView.adapter = shopListAdapter
+        recyclerView.recycledViewPool.setMaxRecycledViews(
+            R.layout.item_shop_active,
+            ShopListAdapter.MAX_POOL_SIZE
+        )
+        recyclerView.recycledViewPool.setMaxRecycledViews(
+            R.layout.item_shop_inactive,
+            ShopListAdapter.MAX_POOL_SIZE
+        )
 
         mainViewModel = ViewModelProvider(this).get(MainViewModel::class.java)
 
         mainViewModel.shopList.observe(this){
-            Log.d("MainActivityTest", it.toString())
+            shopListAdapter.shopList = it
         }
-
     }
 }

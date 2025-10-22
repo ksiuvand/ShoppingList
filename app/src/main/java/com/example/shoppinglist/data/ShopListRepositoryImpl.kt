@@ -9,13 +9,16 @@ object ShopListRepositoryImpl: ShopListRepository{
 
     private val shopListLD = MutableLiveData<List<ShopItem>>()
 
-    private val shopList = mutableListOf<ShopItem>()
+    private val shopList = sortedSetOf<ShopItem>({o1, o2 -> o1.id.compareTo(o2.id)})
 
     private var newId = 0
 
     init {
         for (i in 0..5){
-            shopList.add(ShopItem("Name $i", i, true))
+            addShopItem(ShopItem("Name $i", i, true))
+        }
+        for (i in 0..5){
+            addShopItem(ShopItem("Name $i", i, false))
         }
     }
 
@@ -24,16 +27,19 @@ object ShopListRepositoryImpl: ShopListRepository{
             shopItem.id = newId++
         }
         shopList.add(shopItem)
+        updateList()
     }
 
     override fun deleteShopItem(shopItem: ShopItem) {
         shopList.remove(shopItem)
+        updateList()
     }
 
     override fun editShopItem(shopItem: ShopItem) {
         val oldShopItem = getShopItem(shopItem.id)
         deleteShopItem(oldShopItem)
         addShopItem(shopItem)
+        updateList()
     }
 
     override fun getShopItem(id: Int): ShopItem {
@@ -41,7 +47,10 @@ object ShopListRepositoryImpl: ShopListRepository{
     }
 
     override fun getShopList(): LiveData<List<ShopItem>> {
-        shopListLD.postValue(shopList)
         return shopListLD
+    }
+
+    private fun updateList(){
+        shopListLD.postValue(shopList.toList())
     }
 }
