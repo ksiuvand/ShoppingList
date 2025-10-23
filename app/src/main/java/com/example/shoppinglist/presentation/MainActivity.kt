@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.shoppinglist.R
@@ -33,6 +34,14 @@ class MainActivity : AppCompatActivity() {
         }
         shopListAdapter = ShopListAdapter()
 
+        shopListAdapter.onShopItemClick = {
+            Log.d("MainActivityEditShopItem", it.toString())
+        }
+
+        shopListAdapter.onShopItemLongClick = {
+            mainViewModel.changeActiveShopItem(it)
+        }
+
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.adapter = shopListAdapter
         recyclerView.recycledViewPool.setMaxRecycledViews(
@@ -44,10 +53,30 @@ class MainActivity : AppCompatActivity() {
             ShopListAdapter.MAX_POOL_SIZE
         )
 
+        val callback = object: ItemTouchHelper.SimpleCallback(
+            0,
+            ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT){
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean {
+                return false
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                mainViewModel.deleteShopItem(
+                    shopListAdapter.currentList[viewHolder.adapterPosition]
+                )
+            }
+        }
+        val itemTouchHelper = ItemTouchHelper(callback)
+        itemTouchHelper.attachToRecyclerView(recyclerView)
+
         mainViewModel = ViewModelProvider(this).get(MainViewModel::class.java)
 
         mainViewModel.shopList.observe(this){
-            shopListAdapter.shopList = it
+            shopListAdapter.submitList(it)
         }
     }
 }

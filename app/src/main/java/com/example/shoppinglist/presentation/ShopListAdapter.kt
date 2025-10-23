@@ -5,17 +5,18 @@ import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.shoppinglist.R
 import com.example.shoppinglist.domain.ShopItem
 
-class ShopListAdapter : RecyclerView.Adapter<ShopListAdapter.ShopViewHolder>() {
+class ShopListAdapter : ListAdapter<ShopItem, ShopViewHolder>(
+    ShopItemDiffCallback()
+) {
 
-     var shopList = listOf<ShopItem>()
-        set(value){
-            field = value
-            notifyDataSetChanged()
-        }
+    var onShopItemLongClick: ((ShopItem) -> Unit)? = null
+    var onShopItemClick: ((ShopItem) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ShopViewHolder {
         val resId = if (viewType == ACTIVE_VIEW_TYPE){
@@ -27,30 +28,26 @@ class ShopListAdapter : RecyclerView.Adapter<ShopListAdapter.ShopViewHolder>() {
         return ShopViewHolder(view)
     }
 
-    override fun getItemCount(): Int {
-        return shopList.size
-    }
-
     override fun onBindViewHolder(holder: ShopViewHolder, position: Int) {
-        val shopItem = shopList.get(position)
+        val shopItem = getItem(position)
         holder.textViewName.text = shopItem.name
         holder.textViewCount.text = shopItem.count.toString()
+        holder.itemView.setOnLongClickListener {
+            onShopItemLongClick?.invoke(shopItem)
+            true
+        }
+        holder.itemView.setOnClickListener {
+            onShopItemClick?.invoke(shopItem)
+        }
     }
 
     override fun getItemViewType(position: Int): Int {
-        val shopItem = shopList.get(position)
+        val shopItem = getItem(position)
         return if (shopItem.isActive){
             ACTIVE_VIEW_TYPE
         }else{
             INACTIVE_VIEW_TYPE
         }
-    }
-
-
-
-    class ShopViewHolder(val itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val textViewName = itemView.findViewById<TextView>(R.id.textViewItemName)
-        val textViewCount = itemView.findViewById<TextView>(R.id.textViewItemCount)
     }
 
     companion object {
