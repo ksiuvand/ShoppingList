@@ -15,12 +15,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.shoppinglist.R
 import com.example.shoppinglist.domain.ShopItem
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var mainViewModel: MainViewModel
     private lateinit var recyclerView: RecyclerView
     private lateinit var shopListAdapter: ShopListAdapter
+    private lateinit var buttonAdd: FloatingActionButton
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,10 +34,17 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+        buttonAdd = findViewById(R.id.buttonAddItem)
+        buttonAdd.setOnClickListener{
+            val intent = ShopItemActivity.newIntentAddMode(this)
+            startActivity(intent)
+        }
         shopListAdapter = ShopListAdapter()
 
         shopListAdapter.onShopItemClick = {
             Log.d("MainActivityEditShopItem", it.toString())
+            val intent = ShopItemActivity.newIntentEditMode(this, it.id)
+            startActivity(intent)
         }
 
         shopListAdapter.onShopItemLongClick = {
