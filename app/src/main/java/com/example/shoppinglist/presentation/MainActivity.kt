@@ -5,10 +5,12 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.fragment.app.FragmentContainerView
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -17,12 +19,14 @@ import com.example.shoppinglist.R
 import com.example.shoppinglist.domain.ShopItem
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), ShopItemFragment.OnEditingFinishedInterface {
 
     private lateinit var mainViewModel: MainViewModel
     private lateinit var recyclerView: RecyclerView
     private lateinit var shopListAdapter: ShopListAdapter
     private lateinit var buttonAdd: FloatingActionButton
+
+    private var fragmentContainer: FragmentContainerView? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,33 +38,24 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+        fragmentContainer = findViewById(R.id.shop_item_container)
+
         buttonAdd = findViewById(R.id.buttonAddItem)
         buttonAdd.setOnClickListener{
-            val intent = ShopItemActivity.newIntentAddMode(this)
-            startActivity(intent)
-        }
-        shopListAdapter = ShopListAdapter()
+            if (isOnePaneMode()){
+                val intent = ShopItemActivity.newIntentAddMode(this)
+                startActivity(intent)
+            }else{
+                supportFragmentManager.popBackStack()
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.shop_item_container, ShopItemFragment.newInstanceAddMode())
+                    .addToBackStack(null)
+                    .commit()
+            }
 
-        shopListAdapter.onShopItemClick = {
-            Log.d("MainActivityEditShopItem", it.toString())
-            val intent = ShopItemActivity.newIntentEditMode(this, it.id)
-            startActivity(intent)
-        }
-
-        shopListAdapter.onShopItemLongClick = {
-            mainViewModel.changeActiveShopItem(it)
         }
 
-        recyclerView = findViewById(R.id.recyclerView)
-        recyclerView.adapter = shopListAdapter
-        recyclerView.recycledViewPool.setMaxRecycledViews(
-            R.layout.item_shop_active,
-            ShopListAdapter.MAX_POOL_SIZE
-        )
-        recyclerView.recycledViewPool.setMaxRecycledViews(
-            R.layout.item_shop_inactive,
-            ShopListAdapter.MAX_POOL_SIZE
-        )
+        setUpRecyclerView()
 
         val callback = object: ItemTouchHelper.SimpleCallback(
             0,
@@ -87,5 +82,46 @@ class MainActivity : AppCompatActivity() {
         mainViewModel.shopList.observe(this){
             shopListAdapter.submitList(it)
         }
+    }
+
+    private fun isOnePaneMode(): Boolean{
+        return fragmentContainer == null
+    }
+
+    private fun setUpRecyclerView(){
+        shopListAdapter = ShopListAdapter()
+
+        shopListAdapter.onShopItemClick = {
+            if (isOnePaneMode()){
+                val intent = ShopItemActivity.newIntentEditMode(this, it.id)
+                startActivity(intent)
+            }else{
+                supportFragmentManager.popBackStack()
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.shop_item_container, ShopItemFragment.newInstanceEditMode(it.id))
+                    .addToBackStack(null)
+                    .commit()
+            }
+        }
+
+        shopListAdapter.onShopItemLongClick = {
+            mainViewModel.changeActiveShopItem(it)
+        }
+
+        recyclerView = findViewById(R.id.recyclerView)
+        recyclerView.adapter = shopListAdapter
+        recyclerView.recycledViewPool.setMaxRecycledViews(
+            R.layout.item_shop_active,
+            ShopListAdapter.MAX_POOL_SIZE
+        )
+        recyclerView.recycledViewPool.setMaxRecycledViews(
+            R.layout.item_shop_inactive,
+            ShopListAdapter.MAX_POOL_SIZE
+        )
+    }
+
+    override fun onEditingFinished() {
+        Toast.makeText(this, "Success", Toast.LENGTH_SHORT).show()
+        supportFragmentManager.popBackStack()
     }
 }
