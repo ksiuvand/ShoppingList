@@ -5,10 +5,16 @@ import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.databinding.DataBindingUtil
+import androidx.databinding.ViewDataBinding
+import androidx.databinding.adapters.ViewBindingAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import androidx.viewbinding.ViewBinding
 import com.example.shoppinglist.R
+import com.example.shoppinglist.databinding.ItemShopActiveBinding
+import com.example.shoppinglist.databinding.ItemShopInactiveBinding
 import com.example.shoppinglist.domain.ShopItem
 
 class ShopListAdapter : ListAdapter<ShopItem, ShopViewHolder>(
@@ -24,19 +30,34 @@ class ShopListAdapter : ListAdapter<ShopItem, ShopViewHolder>(
         }else{
             R.layout.item_shop_inactive
         }
-        val view = LayoutInflater.from(parent.context).inflate(resId, parent, false)
-        return ShopViewHolder(view)
+        val binding = DataBindingUtil.inflate<ViewDataBinding>(
+            LayoutInflater.from(parent.context),
+            resId,
+            parent,
+            false
+        )
+        return ShopViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: ShopViewHolder, position: Int) {
         val shopItem = getItem(position)
-        holder.textViewName.text = shopItem.name
-        holder.textViewCount.text = shopItem.count.toString()
-        holder.itemView.setOnLongClickListener {
+        val binding = holder.binding
+        when (binding){
+            is ItemShopActiveBinding -> {
+                binding.textViewItemName.text = shopItem.name
+                binding.textViewItemCount.text = shopItem.count.toString()
+            }
+            is ItemShopInactiveBinding ->{
+                binding.textViewItemName.text = shopItem.name
+                binding.textViewItemCount.text = shopItem.count.toString()
+            }
+        }
+
+        binding.root.setOnLongClickListener {
             onShopItemLongClick?.invoke(shopItem)
             true
         }
-        holder.itemView.setOnClickListener {
+        binding.root.setOnClickListener {
             onShopItemClick?.invoke(shopItem)
         }
     }
